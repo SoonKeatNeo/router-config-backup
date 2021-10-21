@@ -1,0 +1,188 @@
+# oct/21/2021 13:25:35 by RouterOS 6.49
+# software id = VGX8-XV63
+#
+# model = RB4011iGS+
+/interface bridge
+add dhcp-snooping=yes name=lan-bridge priority=0
+add name=loopback
+/interface ethernet
+set [ find default-name=ether1 ] comment=WAN
+set [ find default-name=sfp-sfpplus1 ] disabled=yes
+/interface gre
+add name=gre-tunnel-1net remote-address=103.131.188.25
+add name=gre-tunnel-Platinum remote-address=138.75.220.168
+add name=gre-tunnel-Tembusu remote-address=158.140.129.152
+add name=gre-tunnel-huiren remote-address=66.96.192.67
+add name=gre-tunnel-mx204 remote-address=103.131.188.1
+add name=gre-tunnel-topper remote-address=66.96.199.129
+add name=gre-tunnel-zhongfu remote-address=118.189.177.157
+/interface vlan
+add interface=sfp-sfpplus1 name=LAN vlan-id=10
+add disabled=yes interface=sfp-sfpplus1 name=WAN vlan-id=80
+/interface ethernet switch port
+set 0 default-vlan-id=0
+set 1 default-vlan-id=0
+set 2 default-vlan-id=0
+set 3 default-vlan-id=0
+set 4 default-vlan-id=0
+set 5 default-vlan-id=0
+set 6 default-vlan-id=0
+set 7 default-vlan-id=0
+set 8 default-vlan-id=0
+set 9 default-vlan-id=0
+set 10 default-vlan-id=0
+set 11 default-vlan-id=0
+/interface list
+add name=tunnels
+add name=upstream
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+/ip pool
+add name=pool1 ranges=10.10.4.100-10.10.4.250
+/ip dhcp-server
+add address-pool=pool1 bootp-support=none disabled=no interface=lan-bridge lease-time=23h59m59s name=LAN_DHCP
+/routing bgp instance
+set default as=64600
+/snmp community
+set [ find default=yes ] addresses=0.0.0.0/0 disabled=yes
+add addresses=0.0.0.0/0 name=SHANASW
+/user group
+set full policy=local,telnet,ssh,ftp,reboot,read,write,policy,test,winbox,password,web,sniff,sensitive,api,romon,dude,tikapp
+/interface bridge port
+add bridge=lan-bridge interface=ether10
+add bridge=lan-bridge interface=ether9
+add bridge=lan-bridge interface=ether8
+add bridge=lan-bridge interface=ether7
+add bridge=lan-bridge interface=LAN
+/ip firewall connection tracking
+set tcp-syn-received-timeout=10s tcp-syn-sent-timeout=10s udp-stream-timeout=4m udp-timeout=15s
+/ip neighbor discovery-settings
+set discover-interface-list=!dynamic
+/ip settings
+set tcp-syncookies=yes
+/interface list member
+add interface=gre-tunnel-1net list=tunnels
+add interface=gre-tunnel-Platinum list=tunnels
+add interface=gre-tunnel-Tembusu list=tunnels
+add interface=gre-tunnel-huiren list=tunnels
+add interface=gre-tunnel-mx204 list=tunnels
+add interface=gre-tunnel-topper list=tunnels
+add interface=gre-tunnel-zhongfu list=tunnels
+add interface=ether1 list=upstream
+add interface=WAN list=upstream
+/ip address
+add address=10.10.4.1/24 interface=lan-bridge network=10.10.4.0
+add address=172.30.255.1/30 interface=gre-tunnel-zhongfu network=172.30.255.0
+add address=10.10.255.53 interface=gre-tunnel-1net network=10.10.255.52
+add address=10.10.255.45 interface=gre-tunnel-Tembusu network=10.10.255.44
+add address=10.10.255.46 interface=gre-tunnel-topper network=10.10.255.46
+add address=10.10.255.50 interface=gre-tunnel-huiren network=10.10.255.51
+add address=10.10.255.43 interface=gre-tunnel-mx204 network=10.10.255.42
+add address=192.168.89.2/30 interface=gre-tunnel-Platinum network=192.168.89.0
+add address=10.10.80.2 interface=loopback network=10.10.80.2
+/ip dhcp-client
+add add-default-route=no !dhcp-options interface=WAN use-peer-dns=no use-peer-ntp=no
+add add-default-route=no disabled=no interface=ether1 use-peer-dns=no use-peer-ntp=no
+/ip dhcp-server lease
+add address=10.10.4.218 client-id=1:f0:9f:c2:33:59:8d mac-address=F0:9F:C2:33:59:8D server=LAN_DHCP
+add address=10.10.4.138 client-id=1:d8:bb:c1:1b:33:72 mac-address=D8:BB:C1:1B:33:72 server=LAN_DHCP
+/ip dhcp-server network
+add address=10.10.4.0/24 dns-server=10.10.4.1 domain=shana.sg gateway=10.10.4.1 netmask=24
+/ip dns
+set allow-remote-requests=yes cache-size=4096KiB servers=8.8.8.8,1.1.1.1
+/ip dns static
+add address=172.16.0.31 name=monitor.x.znx.cc
+add address=8.8.8.8 name=dns.google
+add address=8.8.4.4 name=dns.google
+/ip firewall address-list
+add address=118.189.177.157 list=WAN_Allowed_Address
+add address=103.131.188.25 list=WAN_Allowed_Address
+add address=158.140.129.152 list=WAN_Allowed_Address
+add address=66.96.199.129 list=WAN_Allowed_Address
+add address=66.96.192.67 list=WAN_Allowed_Address
+add address=103.131.188.0/24 list=WAN_Allowed_Address
+add address=138.75.220.168 list=WAN_Allowed_Address
+/ip firewall filter
+add action=accept chain=input in-interface-list=upstream src-address-list=WAN_Allowed_Address
+add action=accept chain=input in-interface-list=upstream protocol=icmp
+add action=accept chain=input connection-state=established,related in-interface-list=upstream tcp-flags=""
+add action=drop chain=input in-interface-list=upstream
+add action=fasttrack-connection chain=forward connection-state=established,related
+add action=accept chain=forward connection-state=established,related
+/ip firewall mangle
+add action=change-mss chain=forward new-mss=1412 out-interface-list=tunnels passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1413-65535
+/ip firewall nat
+add action=masquerade chain=srcnat out-interface=ether1
+add action=masquerade chain=srcnat out-interface=gre-tunnel-Platinum
+/ip firewall service-port
+set ftp disabled=yes
+set tftp disabled=yes
+set irc disabled=yes
+set h323 disabled=yes
+set sip disabled=yes
+set pptp disabled=yes
+set udplite disabled=yes
+set dccp disabled=yes
+set sctp disabled=yes
+/ip route
+add check-gateway=ping distance=10 gateway=10.10.255.52
+add distance=60 gateway=118.189.192.1
+add distance=1 dst-address=10.10.255.47/32 gateway=gre-tunnel-topper
+add distance=1 dst-address=10.10.255.51/32 gateway=gre-tunnel-huiren
+add distance=1 dst-address=66.96.192.67/32 gateway=118.189.192.1
+add distance=1 dst-address=66.96.199.129/32 gateway=118.189.192.1
+add distance=1 dst-address=103.131.188.1/32 gateway=118.189.192.1
+add distance=1 dst-address=103.131.188.25/32 gateway=118.189.192.1
+add distance=1 dst-address=111.65.101.0/24 gateway=118.189.192.1
+add distance=1 dst-address=118.189.177.157/32 gateway=118.189.192.1
+add distance=1 dst-address=124.150.152.0/21 gateway=10.10.255.52
+add distance=1 dst-address=138.75.220.168/32 gateway=118.189.192.1
+add distance=1 dst-address=158.140.129.152/32 gateway=118.189.192.1
+add distance=1 dst-address=172.16.0.16/32 gateway=gre-tunnel-Platinum
+add disabled=yes distance=1 dst-address=172.16.1.0/24 gateway=gre-tunnel-Platinum
+add distance=1 dst-address=172.30.255.0/32 gateway=gre-tunnel-zhongfu
+add disabled=yes distance=1 dst-address=172.217.194.0/24 gateway=WAN
+add distance=1 dst-address=202.65.240.0/24 gateway=118.189.192.1
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+/ip ssh
+set host-key-size=4096 strong-crypto=yes
+/ip upnp
+set enabled=yes
+/ip upnp interfaces
+add interface=lan-bridge type=internal
+add interface=ether1 type=external
+add interface=gre-tunnel-1net type=external
+/ipv6 address
+add address=2403:cfc0:1100:ff01::2 advertise=no interface=gre-tunnel-1net
+add address=2403:cfc0:1100:ff02::1 disabled=yes interface=LAN
+/ipv6 nd
+add disabled=yes interface=LAN ra-interval=30s-2m
+/ipv6 route
+add distance=1 gateway=2403:cfc0:1100:ff01::1
+/routing bgp network
+add network=10.10.4.0/24
+add network=10.10.80.2/32
+add network=172.30.255.0/30
+add network=10.10.255.44/31 synchronize=no
+/routing bgp peer
+add name=zhongfu remote-address=172.30.255.2 remote-as=139264
+add hold-time=30s name=1net remote-address=10.10.255.52 remote-as=64602
+add name=Tembusu remote-address=10.10.255.44 remote-as=64603
+add multihop=yes name=topper remote-address=10.10.255.47 remote-as=64601
+add name=woohuiren remote-address=10.10.255.51 remote-as=200897 update-source=gre-tunnel-huiren
+/snmp
+set contact=neo@soonkeat.sg enabled=yes location="Singapore 682691"
+/system clock
+set time-zone-name=Asia/Singapore
+/system ntp client
+set enabled=yes primary-ntp=172.104.34.44 secondary-ntp=202.73.57.106
+/system scheduler
+add disabled=yes interval=1d name=turn-off-ap on-event="/interface disable ether10" policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-date=oct/08/2021 start-time=03:19:00
+add disabled=yes interval=1d name=turn-on-ap on-event="/interface enable ether10" policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-date=oct/08/2021 start-time=03:20:00
