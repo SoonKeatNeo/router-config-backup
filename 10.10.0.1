@@ -1,0 +1,102 @@
+# oct/21/2021 13:27:54 by RouterOS 6.47.8
+# software id = ZSQQ-0FUC
+#
+# model = RB750Gr3
+/interface bridge
+add admin-mac=08:55:31:AE:AE:B3 auto-mac=no comment=defconf name=bridge
+add name=loopback
+/interface gre
+add name=gre-tunnel-1net remote-address=103.131.188.25
+add name=gre-tunnel-CCK remote-address=118.189.193.170
+/interface list
+add comment=defconf name=WAN
+add comment=defconf name=LAN
+add name=tunnels
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+/ip hotspot profile
+set [ find default=yes ] html-directory=flash/hotspot
+/ip pool
+add name=default-dhcp ranges=10.10.0.100-10.10.0.250
+/ip dhcp-server
+add address-pool=default-dhcp disabled=no interface=bridge name=defconf
+/routing bgp instance
+set default as=64603
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=0.0.0.0/0 name=SHANASW
+/interface bridge port
+add bridge=bridge comment=defconf interface=ether2
+add bridge=bridge comment=defconf interface=ether3
+add bridge=bridge comment=defconf interface=ether4
+add bridge=bridge comment=defconf interface=ether5
+/ip neighbor discovery-settings
+set discover-interface-list=LAN
+/interface list member
+add comment=defconf interface=bridge list=LAN
+add comment=defconf interface=ether1 list=WAN
+add disabled=yes interface=gre-tunnel-1net list=WAN
+add interface=gre-tunnel-CCK list=WAN
+add interface=gre-tunnel-1net list=tunnels
+/ip address
+add address=10.10.0.1/24 interface=bridge network=10.10.0.0
+add address=10.10.255.54 interface=gre-tunnel-1net network=10.10.255.55
+add address=10.10.255.44 interface=gre-tunnel-CCK network=10.10.255.45
+add address=10.10.80.1 interface=loopback network=10.10.80.1
+/ip dhcp-client
+add add-default-route=no comment=defconf disabled=no interface=ether1 use-peer-dns=no use-peer-ntp=no
+/ip dhcp-server lease
+add address=10.10.0.101 client-id=1:80:2a:a8:d9:7b:5 mac-address=80:2A:A8:D9:7B:05 server=defconf
+/ip dhcp-server network
+add address=10.10.0.0/24 comment=defconf gateway=10.10.0.1
+/ip dns
+set allow-remote-requests=yes servers=8.8.8.8,1.1.1.1
+/ip dns static
+add address=192.168.88.1 comment=defconf name=router.lan
+/ip firewall address-list
+add address=118.189.193.170 list=ALLOWED_ADDR
+add address=103.131.188.0/24 list=ALLOWED_ADDR
+add address=103.131.188.25 list=ALLOWED_ADDR
+/ip firewall filter
+add action=accept chain=input comment="allow from wan allowed addresses" src-address-list=ALLOWED_ADDR
+add action=accept chain=input comment="snmp allow" dst-port=161 protocol=udp src-address=172.16.0.31
+add action=accept chain=input comment="defconf: accept established,related,untracked" connection-state=established,related,untracked
+add action=accept chain=input comment="defconf: accept ICMP" protocol=icmp
+add action=drop chain=input comment="defconf: drop all not coming from LAN" in-interface=ether1
+add action=accept chain=forward comment="defconf: accept in ipsec policy" ipsec-policy=in,ipsec
+add action=accept chain=forward comment="defconf: accept out ipsec policy" ipsec-policy=out,ipsec
+add action=fasttrack-connection chain=forward comment="defconf: fasttrack" connection-state=established,related
+add action=accept chain=forward comment="defconf: accept established,related, untracked" connection-state=established,related,untracked
+add action=accept chain=input disabled=yes src-address-list=WAN_Allowed_Address
+add action=fasttrack-connection chain=forward connection-state=established,related disabled=yes
+add action=accept chain=forward connection-state=established,related disabled=yes
+/ip firewall mangle
+add action=change-mss chain=forward new-mss=1312 out-interface-list=tunnels passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1313-65535
+/ip firewall nat
+add action=masquerade chain=srcnat comment="defconf: masquerade" ipsec-policy=out,none out-interface-list=WAN
+/ip route
+add distance=1 gateway=10.10.255.55
+add distance=30 gateway=158.140.129.1
+add distance=1 dst-address=103.131.188.25/32 gateway=158.140.129.1
+add distance=1 dst-address=111.65.101.0/24 gateway=158.140.129.1
+add distance=1 dst-address=118.189.193.170/32 gateway=158.140.129.1
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+/routing bgp network
+add network=10.10.0.0/24
+add network=10.10.80.1/32
+/routing bgp peer
+add name=1net remote-address=10.10.255.55 remote-as=64602
+add name=cck remote-address=10.10.255.45 remote-as=64600
+/snmp
+set contact=neo@soonkeat.sg enabled=yes location="Singapore 535129"
+/system clock
+set time-zone-name=Asia/Singapore
+/tool mac-server
+set allowed-interface-list=LAN
+/tool mac-server mac-winbox
+set allowed-interface-list=LAN
